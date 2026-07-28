@@ -1,0 +1,79 @@
+{
+  "flight_condition": {
+    "mach": 1.8,
+    "altitude_m": 12000.0
+  },
+  "design": {
+    "compressor_pressure_ratio": 22.924503455600686,
+    "turbine_inlet_temperature_K": 1699.9999999999998,
+    "turbine_pressure_ratio": 5.530251646507563,
+    "airflow_kg_per_s": 36.919816485926866,
+    "maximum_flowpath_diameter_m": 0.5213476316248115,
+    "limiting_station": "wet.afterburner.Fl_O"
+  },
+  "dry": {
+    "net_thrust_N": 24999.999995449252,
+    "specific_thrust_N_s_per_kg": 677.1431273223901,
+    "TSFC_kg_per_N_hr": 0.11136232234707068,
+    "fuel_flow_kg_per_s": 0.7733494606027874
+  },
+  "afterburner_on": {
+    "exit_temperature_K": 2099.999999995965,
+    "net_thrust_N": 43605.142435012676,
+    "specific_thrust_N_s_per_kg": 1181.076900846301,
+    "thrust_augmentation_ratio": 1.7442056977180047,
+    "TSFC_kg_per_N_hr": 0.15993015901475807,
+    "total_fuel_flow_kg_per_s": 1.9371603787480063,
+    "afterburner_fuel_air_ratio": 0.03152266259472989
+  },
+  "flowpath_diameters_m": {
+    "dry": {
+      "inlet.Fl_O": 0.4963604234046702,
+      "duct.Fl_O": 0.5150092945608642,
+      "comp.Fl_O": 0.1820475732613719,
+      "burner.Fl_O": 0.24606306257935673,
+      "turb.Fl_O": 0.402229429003675,
+      "afterburner.Fl_O": 0.4381926578331032
+    },
+    "wet": {
+      "inlet.Fl_O": 0.4963604234046701,
+      "duct.Fl_O": 0.5150092945608635,
+      "comp.Fl_O": 0.18204757326137183,
+      "burner.Fl_O": 0.24606306257935637,
+      "turb.Fl_O": 0.40222942900367376,
+      "afterburner.Fl_O": 0.5213476316248115
+    }
+  },
+  "constraints": {
+    "dry_thrust_target_N": 25000.0,
+    "T4_limit_K": 1700.0,
+    "T7_limit_K": 2100.0,
+    "diameter_limit_m": 0.7
+  },
+  "optimization": {
+    "method": "multistart SLSQP with central finite-difference totals",
+    "objective": "maximize afterburner-on specific thrust",
+    "starts": [
+      {
+        "compressor_pressure_ratio": 10.0,
+        "T4_K": 1650.0
+      },
+      {
+        "compressor_pressure_ratio": 23.0,
+        "T4_K": 1700.0
+      }
+    ],
+    "converged_candidates": [
+      {
+        "wet_specific_thrust_N_s_per_kg": 1180.2065700022179,
+        "compressor_pressure_ratio": 20.806054958719454,
+        "T4_K": 1699.9999999999998
+      },
+      {
+        "wet_specific_thrust_N_s_per_kg": 1181.076900846301,
+        "compressor_pressure_ratio": 22.924503455600686,
+        "T4_K": 1699.9999999999998
+      }
+    ]
+  }
+}
