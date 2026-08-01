@@ -245,7 +245,7 @@ class TurbojetMaxDiameterOptimization(om.Group):
     def setup(self) -> None:
         design = self.add_subsystem("design", om.IndepVarComp())
         design.add_output("compressor_PR", val=10.0)
-        design.add_output("T4", val=1_650.0, units="degK")
+        design.add_output("T4", val=MAX_T4_K, units="degK")
 
         self.add_subsystem(
             "dry",
@@ -401,7 +401,7 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
         },
         "design": {
             "compressor_pressure_ratio": scalar(prob, "design.compressor_PR"),
-            "turbine_inlet_temperature_K": scalar(prob, "dry.burner.Fl_O:tot:T", "degK"),
+            "turbine_inlet_temperature_K": scalar(prob, "design.T4", "degK"),
             "turbine_pressure_ratio": scalar(prob, "dry.turb.PR"),
             "airflow_kg_per_s": dry_airflow,
             "maximum_flowpath_diameter_m": max(flat_diameters.values()),

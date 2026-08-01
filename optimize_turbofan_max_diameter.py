@@ -126,7 +126,7 @@ class TurbofanMaxDiameterOptimization(om.Group):
     def setup(self) -> None:
         design = self.add_subsystem("design", om.IndepVarComp())
         design.add_output("compressor_PR", val=10.0)
-        design.add_output("T4", val=1_650.0, units="degK")
+        design.add_output("T4", val=MAX_T4_K, units="degK")
 
         design.add_output("bypass_ratio", val=BYPASS_RATIO)
 
@@ -288,7 +288,7 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
         },
         "design": {
             "compressor_pressure_ratio": scalar(prob, "design.compressor_PR"),
-            "turbine_inlet_temperature_K": scalar(prob, "core.burner.Fl_O:tot:T", "degK"),
+            "turbine_inlet_temperature_K": scalar(prob, "design.T4", "degK"),
             "turbine_pressure_ratio": scalar(prob, "core.turb.PR"),
             "core_airflow_kg_per_s": core_airflow,
             "maximum_flowpath_diameter_m": max(flat_diameters.values()),
