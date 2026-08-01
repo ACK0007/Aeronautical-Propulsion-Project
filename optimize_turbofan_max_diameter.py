@@ -298,6 +298,10 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
             "net_thrust_N": scalar(prob, "metrics.net_thrust", "N"),
             "dry_thrust_N": scalar(prob, "core.perf.Fn", "N"),
             "wet_thrust_N": wet_thrust,
+            "dry_specific_thrust_N_s_per_kg": scalar(prob, "core.perf.Fn", "N") / core_airflow,
+            "wet_specific_thrust_N_s_per_kg": wet_thrust / core_airflow,
+            "dry_TSFC_kg_per_N_hr": scalar(prob, "core.perf.TSFC", "kg/(h*N)"),
+            "wet_TSFC_kg_per_N_hr": scalar(prob, "wet.perf.TSFC", "kg/(h*N)"),
             "bypass_ratio": scalar(prob, "metrics.bypass_ratio"),
             "thrust_augmentation": scalar(prob, "metrics.thrust_augmentation"),
         },
@@ -326,7 +330,11 @@ def print_results(results: dict[str, Any]) -> None:
     print(f"Turbine inlet T4      : {design['turbine_inlet_temperature_K']:.2f} K")
     print(f"Core airflow          : {design['core_airflow_kg_per_s']:.3f} kg/s")
     print(f"Dry thrust            : {performance['dry_thrust_N'] / 1e3:.3f} kN")
+    print(f"Dry specific thrust   : {performance['dry_specific_thrust_N_s_per_kg']:.3f} N/(kg/s)")
+    print(f"Dry TSFC              : {performance['dry_TSFC_kg_per_N_hr']:.3f} kg/(N·hr)")
     print(f"Afterburner-on thrust : {performance['net_thrust_N'] / 1e3:.3f} kN")
+    print(f"Wet specific thrust   : {performance['wet_specific_thrust_N_s_per_kg']:.3f} N/(kg/s)")
+    print(f"Wet TSFC              : {performance['wet_TSFC_kg_per_N_hr']:.3f} kg/(N·hr)")
     print(f"Bypass ratio          : {performance['bypass_ratio']:.3f}")
     print(f"Thrust augmentation   : {performance['thrust_augmentation']:.3f}x")
     print(

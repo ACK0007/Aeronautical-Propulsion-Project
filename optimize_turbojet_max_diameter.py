@@ -450,6 +450,7 @@ def print_results(results: dict[str, Any]) -> None:
     print(
         f"Dry specific thrust   : {dry['specific_thrust_N_s_per_kg']:.3f} N/(kg/s)"
     )
+    print(f"Dry TSFC              : {dry['TSFC_kg_per_N_hr']:.3f} kg/(N·hr)")
     print(
         f"Maximum flow diameter : {design['maximum_flowpath_diameter_m']:.4f} m "
         f"at {design['limiting_station']}"
@@ -459,6 +460,7 @@ def print_results(results: dict[str, Any]) -> None:
     print(
         f"Wet specific thrust   : {wet['specific_thrust_N_s_per_kg']:.3f} N/(kg/s)"
     )
+    print(f"Wet TSFC              : {wet['TSFC_kg_per_N_hr']:.3f} kg/(N·hr)")
     print(f"Thrust augmentation   : {wet['thrust_augmentation_ratio']:.3f}x")
 
 

@@ -4,75 +4,49 @@
     "altitude_m": 12000.0
   },
   "design": {
-    "compressor_pressure_ratio": 10.001326278464532,
-    "turbine_inlet_temperature_K": 1651.2263377701533,
-    "turbine_pressure_ratio": 2.9104475785658614,
+    "compressor_pressure_ratio": 10.0,
+    "turbine_inlet_temperature_K": 1649.9999999999998,
+    "turbine_pressure_ratio": 2.913313527772777,
     "airflow_kg_per_s": 55.0,
-    "maximum_flowpath_diameter_m": 0.7000000000004438,
+    "maximum_flowpath_diameter_m": 0.7004227765519467,
     "limiting_station": "wet.afterburner.Fl_O"
   },
   "dry": {
-    "net_thrust_N": 39162.27070943065,
-    "specific_thrust_N_s_per_kg": 712.0412856260119,
-    "TSFC_kg_per_N_hr": 0.12213131570236434,
-    "fuel_flow_kg_per_s": 1.3285943465652736
+    "net_thrust_N": 39115.224873585634,
+    "specific_thrust_N_s_per_kg": 711.1859067924661,
+    "TSFC_kg_per_N_hr": 0.12209444530531408,
+    "fuel_flow_kg_per_s": 1.3265976899814211
   },
   "afterburner_on": {
     "exit_temperature_K": 2100.0,
-    "net_thrust_N": 62805.80727213324,
-    "specific_thrust_N_s_per_kg": 1141.9237685842409,
-    "thrust_augmentation_ratio": 1.6037325245547878,
-    "TSFC_kg_per_N_hr": 0.16553189861430026,
-    "total_fuel_flow_kg_per_s": 2.887879033822254,
-    "afterburner_fuel_air_ratio": 0.028350630677399645
+    "net_thrust_N": 62792.3708746779,
+    "specific_thrust_N_s_per_kg": 1141.679470448689,
+    "thrust_augmentation_ratio": 1.6053179056905118,
+    "TSFC_kg_per_N_hr": 0.16556807909953206,
+    "total_fuel_flow_kg_per_s": 2.8878922855071933,
+    "afterburner_fuel_air_ratio": 0.028387174464104954
   },
   "flowpath_diameters_m": {
     "dry": {
-      "inlet.Fl_O": 0.6058271388914745,
-      "duct.Fl_O": 0.6285888090879347,
-      "comp.Fl_O": 0.3159523579678582,
-      "burner.Fl_O": 0.4526731996449916,
-      "turb.Fl_O": 0.5524040153389894,
-      "afterburner.Fl_O": 0.6031829603630197
+      "inlet.Fl_O": 0.6058271388914742,
+      "duct.Fl_O": 0.6285888090879342,
+      "comp.Fl_O": 0.31597101498508,
+      "burner.Fl_O": 0.45261312935370607,
+      "turb.Fl_O": 0.5525538477210925,
+      "afterburner.Fl_O": 0.6033933181728056
     },
     "wet": {
-      "inlet.Fl_O": 0.6058271388914745,
-      "duct.Fl_O": 0.6285888090879355,
-      "comp.Fl_O": 0.3159523579678582,
-      "burner.Fl_O": 0.4526731996449916,
-      "turb.Fl_O": 0.5524040153389894,
-      "afterburner.Fl_O": 0.7000000000004438
+      "inlet.Fl_O": 0.6058271388914742,
+      "duct.Fl_O": 0.6285888090879351,
+      "comp.Fl_O": 0.31597101498508,
+      "burner.Fl_O": 0.45261312935370607,
+      "turb.Fl_O": 0.5525538477210926,
+      "afterburner.Fl_O": 0.7004227765519467
     }
   },
   "constraints": {
     "diameter_limit_m": 0.7,
     "T4_limit_K": 1700.0,
     "T7_limit_K": 2100.0
-  },
-  "optimization": {
-    "method": "multistart SLSQP with central finite-difference totals",
-    "objective": "maximize afterburner-on net thrust under 0.7 m diameter",
-    "starts": [
-      {
-        "compressor_pressure_ratio": 10.0,
-        "T4_K": 1650.0
-      },
-      {
-        "compressor_pressure_ratio": 20.0,
-        "T4_K": 1700.0
-      }
-    ],
-    "converged_candidates": [
-      {
-        "wet_thrust_N": 62805.80727213324,
-        "compressor_pressure_ratio": 10.001326278464532,
-        "T4_K": 1651.2263377701533
-      },
-      {
-        "wet_thrust_N": 62805.807272095,
-        "compressor_pressure_ratio": 19.98984638933499,
-        "T4_K": 1564.9880320147026
-      }
-    ]
   }
 }

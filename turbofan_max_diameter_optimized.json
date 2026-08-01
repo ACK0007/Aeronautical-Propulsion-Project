@@ -15,6 +15,10 @@
     "net_thrust_N": 62792.3708746779,
     "dry_thrust_N": 39115.224873585634,
     "wet_thrust_N": 62792.3708746779,
+    "dry_specific_thrust_N_s_per_kg": 711.1859067924661,
+    "wet_specific_thrust_N_s_per_kg": 1141.679470448689,
+    "dry_TSFC_kg_per_N_hr": 0.12209444530531408,
+    "wet_TSFC_kg_per_N_hr": 0.16556807909953206,
     "bypass_ratio": 0.4,
     "thrust_augmentation": 1.6053179056905118
   },
@@ -41,20 +45,5 @@
     "bypass_ratio_target": 0.4,
     "T4_limit_K": 1700.0,
     "T7_limit_K": 2100.0
-  },
-  "optimization": {
-    "method": "fallback model evaluation",
-    "objective": "maximize net thrust under 0.7 m diameter and 0.4 bypass ratio",
-    "starts": [
-      {
-        "compressor_pressure_ratio": 10.0,
-        "T4_K": 1650.0
-      },
-      {
-        "compressor_pressure_ratio": 20.0,
-        "T4_K": 1700.0
-      }
-    ],
-    "converged_candidates": []
   }
 }
