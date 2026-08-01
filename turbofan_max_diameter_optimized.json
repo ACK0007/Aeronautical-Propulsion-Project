@@ -1,0 +1,59 @@
+{
+  "flight_condition": {
+    "mach": 1.8,
+    "altitude_m": 12000.0
+  },
+  "design": {
+    "compressor_pressure_ratio": 10.0,
+    "turbine_inlet_temperature_K": 1649.9999999999998,
+    "turbine_pressure_ratio": 2.913313527772777,
+    "core_airflow_kg_per_s": 55.0,
+    "maximum_flowpath_diameter_m": 0.7004227765519467,
+    "limiting_station": "wet.afterburner.Fl_O"
+  },
+  "performance": {
+    "net_thrust_N": 44591.35635588762,
+    "bypass_ratio": 0.4,
+    "core_thrust_N": 39115.224873585634,
+    "wet_thrust_N": 62792.3708746779
+  },
+  "flowpath_diameters_m": {
+    "core": {
+      "inlet.Fl_O": 0.6058271388914742,
+      "duct.Fl_O": 0.6285888090879342,
+      "comp.Fl_O": 0.31597101498508,
+      "burner.Fl_O": 0.45261312935370607,
+      "turb.Fl_O": 0.5525538477210925,
+      "afterburner.Fl_O": 0.6033933181728056
+    },
+    "wet": {
+      "inlet.Fl_O": 0.6058271388914742,
+      "duct.Fl_O": 0.6285888090879351,
+      "comp.Fl_O": 0.31597101498508,
+      "burner.Fl_O": 0.45261312935370607,
+      "turb.Fl_O": 0.5525538477210926,
+      "afterburner.Fl_O": 0.7004227765519467
+    }
+  },
+  "constraints": {
+    "diameter_limit_m": 0.7,
+    "bypass_ratio_target": 0.4,
+    "T4_limit_K": 1700.0,
+    "T7_limit_K": 2100.0
+  },
+  "optimization": {
+    "method": "fallback model evaluation",
+    "objective": "maximize net thrust under 0.7 m diameter and 0.4 bypass ratio",
+    "starts": [
+      {
+        "compressor_pressure_ratio": 10.0,
+        "T4_K": 1650.0
+      },
+      {
+        "compressor_pressure_ratio": 20.0,
+        "T4_K": 1700.0
+      }
+    ],
+    "converged_candidates": []
+  }
+}
