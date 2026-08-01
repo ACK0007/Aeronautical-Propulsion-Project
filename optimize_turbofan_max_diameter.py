@@ -89,26 +89,35 @@ class TurbofanCycle(TurbojetCycle):
 
 
 class TurbofanMetrics(om.ExplicitComponent):
-    """Simple performance metrics for the turbofan approximation."""
+    """Dry and afterburning turbofan performance metrics."""
 
     def setup(self) -> None:
-        self.add_input("core_thrust", val=1.0, units="N")
+        self.add_input("dry_thrust", val=1.0, units="N")
+        self.add_input("wet_thrust", val=1.0, units="N")
         self.add_input("bypass_ratio_target", val=BYPASS_RATIO)
         self.add_output("net_thrust", val=1.0, units="N")
         self.add_output("bypass_ratio", val=BYPASS_RATIO)
+        self.add_output("thrust_augmentation", val=1.0)
         self.declare_partials("*", "*")
 
     def compute(self, inputs, outputs) -> None:
-        core_thrust = inputs["core_thrust"]
+        dry_thrust = inputs["dry_thrust"]
+        wet_thrust = inputs["wet_thrust"]
         bypass_ratio = inputs["bypass_ratio_target"]
-        outputs["net_thrust"] = core_thrust * (1.0 + 0.35 * bypass_ratio)
+        outputs["net_thrust"] = wet_thrust
         outputs["bypass_ratio"] = bypass_ratio
+        outputs["thrust_augmentation"] = wet_thrust / dry_thrust
 
     def compute_partials(self, inputs, partials) -> None:
-        bypass_ratio = inputs["bypass_ratio_target"]
-        partials["net_thrust", "core_thrust"] = 1.0 + 0.35 * bypass_ratio
-        partials["net_thrust", "bypass_ratio_target"] = 0.35 * inputs["core_thrust"]
+        dry_thrust = inputs["dry_thrust"]
+        wet_thrust = inputs["wet_thrust"]
+        partials["net_thrust", "dry_thrust"] = 0.0
+        partials["net_thrust", "wet_thrust"] = 1.0
+        partials["net_thrust", "bypass_ratio_target"] = 0.0
         partials["bypass_ratio", "bypass_ratio_target"] = 1.0
+        partials["thrust_augmentation", "dry_thrust"] = -wet_thrust / dry_thrust**2
+        partials["thrust_augmentation", "wet_thrust"] = 1.0 / dry_thrust
+        partials["thrust_augmentation", "bypass_ratio_target"] = 0.0
 
 
 class TurbofanMaxDiameterOptimization(om.Group):
@@ -135,7 +144,8 @@ class TurbofanMaxDiameterOptimization(om.Group):
         self.connect("design.compressor_PR", "wet.comp.PR")
         self.connect("design.T4", "core.balance.rhs:FAR")
         self.connect("design.T4", "wet.balance.rhs:FAR")
-        self.connect("core.perf.Fn", "metrics.core_thrust")
+        self.connect("core.perf.Fn", "metrics.dry_thrust")
+        self.connect("wet.perf.Fn", "metrics.wet_thrust")
         self.connect("design.bypass_ratio", "metrics.bypass_ratio_target")
 
         self.add_design_var(
@@ -286,9 +296,10 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
         },
         "performance": {
             "net_thrust_N": scalar(prob, "metrics.net_thrust", "N"),
-            "bypass_ratio": scalar(prob, "metrics.bypass_ratio"),
-            "core_thrust_N": scalar(prob, "core.perf.Fn", "N"),
+            "dry_thrust_N": scalar(prob, "core.perf.Fn", "N"),
             "wet_thrust_N": wet_thrust,
+            "bypass_ratio": scalar(prob, "metrics.bypass_ratio"),
+            "thrust_augmentation": scalar(prob, "metrics.thrust_augmentation"),
         },
         "flowpath_diameters_m": station_diameters,
         "constraints": {
@@ -314,8 +325,10 @@ def print_results(results: dict[str, Any]) -> None:
     print(f"Compressor PR         : {design['compressor_pressure_ratio']:.4f}")
     print(f"Turbine inlet T4      : {design['turbine_inlet_temperature_K']:.2f} K")
     print(f"Core airflow          : {design['core_airflow_kg_per_s']:.3f} kg/s")
-    print(f"Net thrust            : {performance['net_thrust_N'] / 1e3:.3f} kN")
+    print(f"Dry thrust            : {performance['dry_thrust_N'] / 1e3:.3f} kN")
+    print(f"Afterburner-on thrust : {performance['net_thrust_N'] / 1e3:.3f} kN")
     print(f"Bypass ratio          : {performance['bypass_ratio']:.3f}")
+    print(f"Thrust augmentation   : {performance['thrust_augmentation']:.3f}x")
     print(
         f"Maximum flow diameter : {design['maximum_flowpath_diameter_m']:.4f} m "
         f"at {design['limiting_station']}"

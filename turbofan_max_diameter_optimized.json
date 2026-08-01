@@ -12,10 +12,11 @@
     "limiting_station": "wet.afterburner.Fl_O"
   },
   "performance": {
-    "net_thrust_N": 44591.35635588762,
+    "net_thrust_N": 62792.3708746779,
+    "dry_thrust_N": 39115.224873585634,
+    "wet_thrust_N": 62792.3708746779,
     "bypass_ratio": 0.4,
-    "core_thrust_N": 39115.224873585634,
-    "wet_thrust_N": 62792.3708746779
+    "thrust_augmentation": 1.6053179056905118
   },
   "flowpath_diameters_m": {
     "core": {
