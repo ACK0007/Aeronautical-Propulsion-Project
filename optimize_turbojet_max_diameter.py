@@ -1,8 +1,9 @@
 """Diameter-limited turbojet sizing with pyCycle.
 
 This version removes the fixed 25 kN dry-thrust requirement from the
-military-turbojet example and instead maximizes the afterburning net thrust
-subject to a maximum equivalent engine flow diameter of 0.7 m.
+military-turbojet example. Turbine-inlet temperature is fixed at 1,650 K,
+while airflow and compressor pressure ratio are adjusted to maximize dry net
+thrust subject to a maximum equivalent engine flow diameter of 0.7 m.
 
 Run:
     .venv/bin/python optimize_turbojet_max_diameter.py
@@ -28,7 +29,7 @@ from pycycle.thermo.tabular.thermo_add import ThermoAdd
 
 DESIGN_MACH = 1.8
 DESIGN_ALTITUDE_M = 12_000.0
-MAX_T4_K = 1_700.0
+FIXED_T4_K = 1_650.0
 MAX_T7_K = 2_100.0
 MAX_DIAMETER_M = 0.7
 MAX_FLOW_AREA_M2 = math.pi * MAX_DIAMETER_M**2 / 4.0
@@ -47,8 +48,7 @@ FLOW_STATIONS = (
 )
 
 OPTIMIZATION_STARTS = (
-    (10.0, 1_650.0),
-    (20.0, 1_700.0),
+    (15.0, 55.0),
 )
 
 
@@ -89,7 +89,7 @@ class TurbojetCycle(pyc.Cycle):
         self.add_subsystem("fc", pyc.FlightConditions())
         self.add_subsystem("recovery", pyc.MilSpecRecovery())
         self.add_subsystem("inlet", pyc.Inlet())
-        self.set_input_defaults("inlet.Fl_I:stat:W", val=55.0, units="kg/s")
+        self.set_input_defaults("inlet.Fl_I:stat:W", val=65.0, units="kg/s")
         self.add_subsystem("duct", pyc.Duct())
         self.add_subsystem(
             "comp",
@@ -210,7 +210,7 @@ class DesignMetrics(om.ExplicitComponent):
     def setup(self) -> None:
         self.add_input("dry_thrust", val=1.0, units="N")
         self.add_input("wet_thrust", val=1.0, units="N")
-        self.add_input("airflow", val=55.0, units="kg/s")
+        self.add_input("airflow", val=65.0, units="kg/s")
         self.add_output("dry_specific_thrust", val=450.0, units="N*s/kg")
         self.add_output("wet_specific_thrust", val=700.0, units="N*s/kg")
         self.add_output("thrust_augmentation", val=1.0)
@@ -240,12 +240,13 @@ class DesignMetrics(om.ExplicitComponent):
 
 
 class TurbojetMaxDiameterOptimization(om.Group):
-    """Maximize thrust under a fixed 0.7 m diameter constraint."""
+    """Maximize dry net thrust under a fixed 0.7 m diameter constraint."""
 
     def setup(self) -> None:
         design = self.add_subsystem("design", om.IndepVarComp())
         design.add_output("compressor_PR", val=10.0)
-        design.add_output("T4", val=MAX_T4_K, units="degK")
+        design.add_output("T4", val=FIXED_T4_K, units="degK")
+        design.add_output("airflow", val=65.0, units="kg/s")
 
         self.add_subsystem(
             "dry",
@@ -261,6 +262,8 @@ class TurbojetMaxDiameterOptimization(om.Group):
         self.connect("design.compressor_PR", "wet.comp.PR")
         self.connect("design.T4", "dry.balance.rhs:FAR")
         self.connect("design.T4", "wet.balance.rhs:FAR")
+        self.connect("design.airflow", "dry.inlet.Fl_I:stat:W")
+        self.connect("design.airflow", "wet.inlet.Fl_I:stat:W")
 
         self.connect("dry.perf.Fn", "metrics.dry_thrust")
         self.connect("wet.perf.Fn", "metrics.wet_thrust")
@@ -273,13 +276,17 @@ class TurbojetMaxDiameterOptimization(om.Group):
             ref=10.0,
         )
         self.add_design_var(
-            "design.T4",
-            lower=1_250.0,
-            upper=MAX_T4_K,
-            units="degK",
-            ref=MAX_T4_K,
+            "design.airflow",
+            lower=5.0,
+            upper=150.0,
+            units="kg/s",
+            ref=65.0,
         )
-        self.add_objective("metrics.wet_thrust", scaler=1.0e-3)
+        self.add_objective(
+            "dry.perf.Fn",
+            units="N",
+            scaler=-1.0e-5,
+        )
 
         for mode in ("dry", "wet"):
             for station in FLOW_STATIONS:
@@ -293,7 +300,7 @@ class TurbojetMaxDiameterOptimization(om.Group):
 
         self.approx_totals(
             method="fd",
-            form="central",
+            form="forward",
             step=2.0e-4,
             step_calc="rel_avg",
         )
@@ -349,8 +356,8 @@ def build_problem() -> om.Problem:
 
     prob = om.Problem(model=TurbojetMaxDiameterOptimization())
     prob.driver = om.ScipyOptimizeDriver(optimizer="SLSQP")
-    prob.driver.options["maxiter"] = 80
-    prob.driver.options["tol"] = 1.0e-7
+    prob.driver.options["maxiter"] = 30
+    prob.driver.options["tol"] = 1.0e-6
     prob.driver.options["disp"] = True
     prob.driver.options["debug_print"] = []
 
@@ -393,6 +400,7 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
     dry_airflow = scalar(prob, "dry.inlet.Fl_O:stat:W", "kg/s")
     dry_thrust = scalar(prob, "dry.perf.Fn", "N")
     wet_thrust = scalar(prob, "wet.perf.Fn", "N")
+    compressor_pr = scalar(prob, "design.compressor_PR")
 
     return {
         "flight_condition": {
@@ -400,7 +408,11 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
             "altitude_m": DESIGN_ALTITUDE_M,
         },
         "design": {
-            "compressor_pressure_ratio": scalar(prob, "design.compressor_PR"),
+            "inlet_pressure_recovery_ratio": scalar(
+                prob,
+                "dry.recovery.ram_recovery",
+            ),
+            "compressor_pressure_ratio": compressor_pr,
             "turbine_inlet_temperature_K": scalar(prob, "design.T4", "degK"),
             "turbine_pressure_ratio": scalar(prob, "dry.turb.PR"),
             "airflow_kg_per_s": dry_airflow,
@@ -425,7 +437,7 @@ def collect_results(prob: om.Problem) -> dict[str, Any]:
         "flowpath_diameters_m": station_diameters,
         "constraints": {
             "diameter_limit_m": MAX_DIAMETER_M,
-            "T4_limit_K": MAX_T4_K,
+            "T4_fixed_K": FIXED_T4_K,
             "T7_limit_K": MAX_T7_K,
         },
     }
@@ -444,6 +456,10 @@ def print_results(results: dict[str, Any]) -> None:
         f"Design point          : M {DESIGN_MACH:.1f}, {DESIGN_ALTITUDE_M:,.0f} m"
     )
     print(f"Compressor PR         : {design['compressor_pressure_ratio']:.4f}")
+    print(
+        f"Inlet pressure ratio  : "
+        f"{design['inlet_pressure_recovery_ratio']:.4f}"
+    )
     print(f"Turbine inlet T4      : {design['turbine_inlet_temperature_K']:.2f} K")
     print(f"Dry airflow           : {design['airflow_kg_per_s']:.3f} kg/s")
     print(f"Dry net thrust        : {dry['net_thrust_N'] / 1e3:.3f} kN")
@@ -493,19 +509,34 @@ def main() -> None:
     else:
         starts = OPTIMIZATION_STARTS[:1] if args.single_start else OPTIMIZATION_STARTS
         candidates: list[tuple[float, om.Problem, dict[str, Any]]] = []
-        for start_pr, start_t4 in starts:
-            print(f"\nStarting SLSQP from PR={start_pr:.1f}, T4={start_t4:.0f} K")
+        for start_pr, start_airflow in starts:
+            print(
+                f"\nStarting SLSQP from PR={start_pr:.1f}, "
+                f"airflow={start_airflow:.1f} kg/s, "
+                f"fixed T4={FIXED_T4_K:.0f} K",
+                flush=True,
+            )
             candidate_prob = build_problem()
             candidate_prob.set_val("design.compressor_PR", start_pr)
-            candidate_prob.set_val("design.T4", start_t4, units="degK")
+            candidate_prob.set_val(
+                "design.airflow",
+                start_airflow,
+                units="kg/s",
+            )
             driver_result = candidate_prob.run_driver()
             if not driver_result.success:
                 print("  This start did not converge; skipping it.")
                 continue
 
             candidate_results = collect_results(candidate_prob)
-            objective = candidate_results["afterburner_on"]["net_thrust_N"]
-            print(f"  Converged wet thrust: {objective / 1e3:.3f} kN")
+            objective = candidate_results["dry"]["net_thrust_N"]
+            print(
+                "  Converged: "
+                f"dry thrust={objective / 1e3:.3f} kN, "
+                f"airflow={candidate_results['design']['airflow_kg_per_s']:.3f} "
+                "kg/s, "
+                f"CPR={candidate_results['design']['compressor_pressure_ratio']:.4f}"
+            )
             candidates.append((objective, candidate_prob, candidate_results))
 
         if not candidates:
@@ -513,17 +544,23 @@ def main() -> None:
 
         _, prob, results = max(candidates, key=lambda candidate: candidate[0])
         results["optimization"] = {
-            "method": "multistart SLSQP with central finite-difference totals",
-            "objective": "maximize afterburner-on net thrust under 0.7 m diameter",
+            "method": "multistart SLSQP with forward finite-difference totals",
+            "objective": "maximize dry net thrust under 0.7 m diameter",
+            "fixed_T4_K": FIXED_T4_K,
             "starts": [
-                {"compressor_pressure_ratio": start_pr, "T4_K": start_t4}
-                for start_pr, start_t4 in starts
+                {
+                    "compressor_pressure_ratio": start_pr,
+                    "airflow_kg_per_s": start_airflow,
+                }
+                for start_pr, start_airflow in starts
             ],
             "converged_candidates": [
                 {
-                    "wet_thrust_N": objective,
+                    "dry_net_thrust_N": objective,
+                    "airflow_kg_per_s": candidate_results["design"][
+                        "airflow_kg_per_s"
+                    ],
                     "compressor_pressure_ratio": candidate_results["design"]["compressor_pressure_ratio"],
-                    "T4_K": candidate_results["design"]["turbine_inlet_temperature_K"],
                 }
                 for objective, _, candidate_results in candidates
             ],
